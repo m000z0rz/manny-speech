@@ -45,7 +45,6 @@ namespace Manny
 
         private void frmMain_Load(object sender, EventArgs e)
         {
-            
             // Load config file
             string configFilename = Path.Combine(Application.StartupPath, "config.json");
             if (!File.Exists(configFilename))
@@ -54,13 +53,14 @@ namespace Manny
             }
             XmlDocument configDocument = JsonConvert.DeserializeXmlNode(File.ReadAllText(configFilename), "root");
             config = configDocument["root"];
-            
+
+
 
             // Connect to hub
+            Debug.WriteLine("Connecting to hub @ " + config["hub"]["address"].InnerText);
             string hubAddress = config["hub"]["address"].InnerText;
             socket = new SocketIOClient.Client(hubAddress);
             socket.Connect();
-
            
             // Setup local speech recognition/tts
             
@@ -108,6 +108,7 @@ namespace Manny
             
             socket.On("connect", (Action<SocketIOClient.Messages.IMessage>)((data) =>
                 {
+                    Debug.WriteLine("Connected to hub");
                     dynamic payload;
                     payload = new {
                         context = JsonConvert.DeserializeObject(JsonConvert.SerializeXmlNode(config["nodeContext"], Newtonsoft.Json.Formatting.None)),
@@ -195,27 +196,29 @@ namespace Manny
 
             Debug.WriteLine(xd.InnerXml);
 
-            if (e.Result.Grammar.RuleName == "getTemperature")
+            string ruleName = e.Result.Grammar.RuleName;
+
+            if (ruleName == "getTemperature")
             {
                 getTemperature();
             }
-            else if (e.Result.Grammar.RuleName == "fanOn")
+            else if (ruleName == "fanOn")
             {
                 fanOn();
             }
-            else if (e.Result.Grammar.RuleName == "fanAuto")
+            else if (ruleName == "fanAuto")
             {
                 fanAuto();
             }
-            else if (e.Result.Grammar.RuleName == "ejectBrain")
+            else if (ruleName == "ejectBrain")
             {
                 if (stephanie != null) stephanie.OpenBrainTray();
             }
-            else if (e.Result.Grammar.RuleName == "retractBrain")
+            else if (ruleName == "retractBrain")
             {
                 if (stephanie != null) stephanie.CloseBrainTray();
             }
-            else if (e.Result.Grammar.RuleName == "toggleDevice")
+            else if (ruleName == "toggleDevice")
             {
                 string room, deviceName;
                 if (xd["SML"]["room"] != null) room = xd["SML"]["room"].InnerText;
@@ -241,7 +244,7 @@ namespace Manny
                 }));
 
             }
-            else if (e.Result.Grammar.RuleName == "turnOnDevice")
+            else if (ruleName == "turnOnDevice")
             {
                 string room, deviceName;
                 if (xd["SML"]["room"] != null) room = xd["SML"]["room"].InnerText;
@@ -266,7 +269,7 @@ namespace Manny
                     localDialoguer.SpeakAsync(deviceName + " on");
                 }));
             }
-            else if (e.Result.Grammar.RuleName == "turnOffDevice")
+            else if (ruleName == "turnOffDevice")
             {
                 string room, deviceName;
                 if (xd["SML"]["room"] != null) room = xd["SML"]["room"].InnerText;
@@ -291,7 +294,7 @@ namespace Manny
                     localDialoguer.SpeakAsync(deviceName + " off");
                 }));
             }
-            else if (e.Result.Grammar.RuleName == "dimDevice")
+            else if (ruleName == "dimDevice")
             {
                 string room, deviceName;
                 if (xd["SML"]["room"] != null) room = xd["SML"]["room"].InnerText;
@@ -317,7 +320,7 @@ namespace Manny
                     localDialoguer.SpeakAsync(deviceName + " dimmed");
                 }));
             }
-            else if (e.Result.Grammar.RuleName == "startAllLinking")
+            else if (ruleName == "startAllLinking")
             {
                 var payload = new
                 {
@@ -330,7 +333,7 @@ namespace Manny
                     localDialoguer.SpeakAsync("I am ready to link an insteon device.");
                 }));
             }
-            else if (e.Result.Grammar.RuleName == "cancelAllLinking")
+            else if (ruleName == "cancelAllLinking")
             {
                 var payload = new
                 {
@@ -342,31 +345,83 @@ namespace Manny
                     localDialoguer.SpeakAsync("Linking process canceled.");
                 }));
             }
-            else if (e.Result.Grammar.RuleName == "setInputToPC")
+            else if (ruleName == "pullUpWiiU")
             {
-                var payload = new
-                {
-                    type = "onkyo",
-                    functionName = "setInputSelector",
-                    input = "pc"
-                };
-                socket.Emit("handleCommand", payload, "", (Action<dynamic>)((data) =>
-                    {
-                        localDialoguer.SpeakAsync("A V Input set to P C");
-                    }));
-            }
-            else if (e.Result.Grammar.RuleName == "setInputToWiiU")
-            {
-                var payload = new
+                var onkyoInput = new
                 {
                     type = "onkyo",
                     functionName = "setInputSelector",
                     input = "game"
                 };
-                socket.Emit("handleCommand", payload, "", (Action<dynamic>)((data) =>
-                    {
-                        localDialoguer.SpeakAsync("A V Input set to we you");
-                    }));
+                socket.Emit("handleCommand", onkyoInput);
+
+                var onkyoVolume = new
+                {
+                    type = "onkyo",
+                    functionName = "setVolume",
+                    volume = "35"
+                };
+                socket.Emit("handleCommand", onkyoVolume);
+
+                var projectorPower = new
+                {
+                    type = "benqprojector",
+                    functionName = "setPower",
+                    power = "on"
+                };
+                socket.Emit("handleCommand", projectorPower);
+
+                var projectorSource = new
+                {
+                    type = "benqprojector",
+                    functionName = "setSource",
+                    source = "hdmi"
+                };
+                socket.Emit("handleCommand", projectorSource);
+            }
+            else if (ruleName == "pullUpPC")
+            {
+                var onkyoInput = new
+                {
+                    type = "onkyo",
+                    functionName = "setInputSelector",
+                    input = "pc"
+                };
+                socket.Emit("handleCommand", onkyoInput);
+
+                var onkyoVolume = new
+                {
+                    type = "onkyo",
+                    functionName = "setVolume",
+                    volume = "45"
+                };
+                socket.Emit("handleCommand", onkyoVolume);
+
+                var projectorPower = new
+                {
+                    type = "benqprojector",
+                    functionName = "setPower",
+                    power = "on"
+                };
+                socket.Emit("handleCommand", projectorPower);
+
+                var projectorSource = new
+                {
+                    type = "benqprojector",
+                    functionName = "setSource",
+                    source = "pc"
+                };
+                socket.Emit("handleCommand", projectorSource);
+            }
+            else if (ruleName == "shutdownProjector")
+            {
+                var projectorPower = new
+                {
+                    type = "benqprojector",
+                    functionName = "setPower",
+                    power = "off"
+                };
+                socket.Emit("handleCommand", projectorPower);
             }
         }
 

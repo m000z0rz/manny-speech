@@ -320,7 +320,7 @@ namespace Manny
             {
                 // good reference for ssml:http://www.cepstral.com/en/tutorials/view/ssml
                 PromptBuilder pb = new PromptBuilder();
-                pb.AppendSsmlMarkup("<prosody rate=\"1.2\">Sir?</prosody>");
+                pb.AppendSsmlMarkup("<prosody rate=\"1.2\">Yes?</prosody>");
                 tts.SpeakAsync(pb);
                 Mode = ModeActive;
             }
