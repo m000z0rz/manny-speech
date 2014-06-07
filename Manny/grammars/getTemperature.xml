@@ -1,0 +1,12 @@
+<grammar version="1.0" xml:lang="en-US" root="getTemperature"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="getTemperature" scope="public">
+ 	<one-of>
+ 		<item> What's the temperature? </item>
+	</one-of>
+ </rule>
+
+</grammar>

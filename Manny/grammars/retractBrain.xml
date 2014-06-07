@@ -1,0 +1,12 @@
+<grammar version="1.0" xml:lang="en-US" root="retractBrain"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="retractBrain" scope="public">
+ 	<one-of>
+ 		<item> Retract brain </item>
+	</one-of>
+ </rule>
+
+</grammar>

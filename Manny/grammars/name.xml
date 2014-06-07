@@ -1,0 +1,10 @@
+<grammar version="1.0" xml:lang="en-US" root="name"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+ <rule id="name">
+ 	<one-of>
+ 		<item> Manny </item>
+	</one-of>
+ </rule>
+
+</grammar>

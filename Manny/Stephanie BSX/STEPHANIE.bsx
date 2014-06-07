@@ -1,0 +1,492 @@
+'code to run on Stephanie's avatar
+'  -Brian Baker
+
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+
+#SELECT $STAMP
+  #CASE BS2, BS2E, BS2PE
+    T1200       CON     813
+    T2400       CON     396
+    T9600       CON     84
+    T19K2       CON     32
+    T38K4       CON     6
+  #CASE BS2SX, BS2P
+    T1200       CON     2063
+    T2400       CON     1021
+    T9600       CON     240
+    T19K2       CON     110
+    T38K4       CON     45
+  #CASE BS2PX
+    T1200       CON     3313
+    T2400       CON     1646
+    T9600       CON     396
+    T19K2       CON     188
+    T38K4       CON     84
+#ENDSELECT
+
+Inverted        CON     $4000
+Open            CON     $8000
+Baud            CON     T9600 + Inverted
+
+'*** PINOUT ***
+'pins to control shift registers
+shiftDataPin    PIN     0
+shiftClock      PIN     1
+shiftLatch      PIN     2
+
+'a few pins to run different features
+RedBG           PIN     4
+TraySensor      PIN     5
+Mouth           PIN     6
+
+BrainTrayOpen   PIN     7
+BrainTrayClose  PIN     8
+
+Relay           PIN     9
+
+'latch pins
+shiftLatchEnable        PIN 10 'active high
+shiftOutputEnable       PIN 11 'active low
+'*** END PINOUT ***
+
+'these are pins on the shift register bank
+LeftEye         CON     8
+RightEye        CON     9
+ThirdEye        CON     10
+omSymbol        CON     15
+
+'now long to run the mouth motor when a mout move command is received
+MouthDelay      CON     60
+
+'blinds scheme stuff
+'  this probably won't make much sense without a pinout of how that third shift
+'  register connects to the h-bridges
+'  essentially, bits 0 and 5 control direction of different sets of motors
+'  and the other bits turn on or off different motors (and thus blinds)
+
+'map out shiftBlinds
+'blinds_BayDirection     CON 8
+'blinds_EastDirection    CON 3
+'blinds_BayE             CON 4
+'blinds_BayMid           CON 5
+'blinds_BayW             CON 6
+'blinds_EastN            CON 1
+'blinds_EastS            CON 2
+blinds_Open              CON %00000000
+blinds_Close             CON %00100001
+
+'op code and parameter received from computer
+inOpCode               VAR    Byte
+inParam                VAR    Byte
+
+'current data to put into the shift registers
+'shiftData has two bytes that control pins on stephanie, shiftBlinds is one byte that controls
+'  8 pins on the blinds motor control board.
+'  these are all on the same 'set' of shift registers; it's 3 shift registers daisy chained together
+shiftData              VAR    Word
+shiftBlinds            VAR    Byte
+
+
+setBit                 VAR    Byte '# of bit in serData to set
+'shiftData:
+'***OBSOLETE
+  '1- ceiling?
+  '2- workbench?
+  '3- non-bench plug?
+  '4- led spinner?
+  '5- none
+  '6- bedlamp
+  '7- fan
+  '8- left eye
+  '9- right eye
+  '10- third eye
+  '11-
+  '12- discoball
+  '13- (13)
+  '14-  (electric green)
+  '15-
+  '16-  ohm backlight?
+
+x                      VAR    Byte    'for loops
+y                      VAR    Byte
+curBlindsScheme        VAR    Byte
+blindPulsesToGo        VAR    Byte    '# times left to pulse the blinds for a slow open
+blindLoop              VAR    Byte    '# loops to run through before pulsing
+blindLoopDelay         VAR    Word
+blindDirection         VAR    Byte
+
+Main:
+  'setup shift register banks
+  HIGH shiftOutputEnable 'set outputs to high impedance
+  LOW shiftLatchEnable 'close latch windows
+
+  HIGH shiftLatch
+  'for the triac & optocouplers that control electrical outlets around the room,
+  '  1 means off and 0 means on
+  shiftData = %1111111000011100
+  shiftBlinds = %00000000
+  GOSUB putShiftData
+
+  LOW shiftOutputEnable 'okay to enable the shift outputs now
+
+  'setup some more pins and variables
+  LOW Relay
+  LOW Mouth
+  LOW BrainTrayOpen
+  LOW BrainTrayClose
+  INPUT TraySensor
+
+  curBlindsScheme = 0
+
+  blindLoop = 0
+  blindPulsesToGo = 0
+  blindLoopDelay = 0
+
+  DO
+mainLoop:
+    'run the blinds motors if needed
+    'GOSUB runBlinds
+
+    'make sure blinds are killed if they're not doing anything
+    IF curBlindsScheme = 0 THEN
+      shiftBlinds = %00000000
+      GOSUB putShiftData
+    ENDIF
+
+    'wait a bit for stuff to come in from the computer
+    '  if we don't get anything, this will go back to mainLoop
+    'commands are sent in the form ?XXXYYYa
+    'where XXX is a three digit op code, and YYY is a three digit parameter
+    SERIN 16, Baud, 150, mainLoop, [WAIT("?"), DEC3 inOpCode, DEC3 inParam]
+
+    'if we're here, we got something from the computer.  check the opcode to see what it is
+    SELECT inOpCode
+    CASE < 17
+      'change a pin on the shift registers
+      setBit = inOpCode
+      SELECT inParam
+      CASE 0
+        GOSUB toggleShiftBit
+      CASE 1
+        GOSUB setShiftBit
+      CASE 2
+        GOSUB clearShiftBit
+      ENDSELECT
+      'GOSUB BlinkThirdEye
+    CASE 19
+      'read out bit statuses
+      PAUSE 20
+      SEROUT 16, Baud, ["?", BIN shiftData, "a"]
+    CASE 20
+      'relay
+      TOGGLE Relay
+      GOSUB BlinkThirdEye
+
+    CASE 23 'blink 3rd eye
+      GOSUB BlinkThirdEye
+    CASE 24 'mouth
+      HIGH Mouth
+      PAUSE MouthDelay
+      LOW Mouth
+
+    CASE 26 'eyes on
+      setBit = LeftEye
+      GOSUB setShiftBit
+      setBit = RightEye
+      GOSUB setShiftBit
+    CASE 27 'eyes off
+      setBit = LeftEye
+      GOSUB clearShiftBit
+      setBit = RightEye
+      GOSUB clearShiftBit
+    CASE 28 'open brain tray
+      HIGH RedBG
+      HIGH BrainTrayOpen
+      PAUSE 1000
+      LOW BrainTrayOpen
+    CASE 29 'close brain tray
+      HIGH BrainTrayClose
+    CloseBrainTrayLoop:
+      IF TraySensor = 0 THEN GOTO CloseBrainTrayLoop
+
+      LOW BrainTrayClose
+      LOW RedBG
+    CASE 30 'toggle om symbol
+      'this is obsolete; om symbol is now on the shift register bank
+      setBit = omSymbol
+      GOSUB toggleShiftBit
+
+    'CASE 31 'step a blind open just a bit
+    '  IF curBlindsScheme = 0 THEN
+    '    blindDirection = blinds_Open
+    '
+    '    blindPulsesToGo = 1
+    '    blindLoopDelay = 1
+    '    blindLoop = 1
+    '
+    '    curBlindsScheme = inParam
+    '  ENDIF
+    'CASE 32 'step a blind closed just a bit
+    '  IF curBlindsScheme = 0 THEN
+    '    blindDirection = blinds_Close
+    '
+    '    blindPulsesToGo = 1
+    '    blindLoopDelay = 1
+    '    blindLoop = 1
+    '
+    '    curBlindsScheme = inParam
+    '  ENDIF
+    'CASE 33 'open blinds
+    '  GOSUB BlinkThirdEye
+    '
+    '  IF curBlindsScheme = 0 THEN
+    '    blindDirection = blinds_Open
+    '
+    '    IF inParam = 8 THEN blindPulsesToGo = 21 ELSE blindPulsesToGo = 9
+    '    blindLoopDelay = 1
+    '    blindLoop = 1
+    '
+    '    curBlindsScheme = inParam
+    '  ENDIF
+    'CASE 34 'close blinds
+    '  GOSUB BlinkThirdEye
+    '
+    '  IF curBlindsScheme = 0 THEN
+    '    blindDirection = blinds_Close
+    '
+    '    IF inParam = 8 THEN blindPulsesToGo = 21 ELSE blindPulsesToGo = 9
+    '    blindLoopDelay = 1
+    '    blindLoop = 1
+    '
+    '    curBlindsScheme = inParam
+    '  ENDIF
+    'CASE 35  'slow blinds open
+    '
+    '  IF curBlindsScheme = 0 THEN
+    '    blindDirection = blinds_Open
+    '
+    '    IF inParam = 8 THEN blindPulsesToGo = 21 ELSE blindPulsesToGo = 9
+    '    blindPulsesToGo = 9
+    '    blindLoopDelay = 1500
+    '    blindLoop = 1
+    '
+    '    curBlindsScheme = inParam
+    '  ENDIF
+    ENDSELECT
+  LOOP                                  ' repeat forever
+
+  '************************************************************************************
+  '************************************************************************************
+
+  'this one is pretty simple to figure out
+  BlinkThirdEye:
+    setBit = ThirdEye
+    GOSUB toggleShiftBit
+    setBit = omSymbol
+    GOSUB toggleShiftBit
+    PAUSE 500
+    setBit = ThirdEye
+    GOSUB toggleShiftBit
+    setBit = omSymbol
+    GOSUB toggleShiftBit
+    RETURN
+
+  'toggles a pin on the shift register bank.  the bit # that it toggles is set in setBit
+  toggleShiftBit:
+    setBit = setBit - 1
+    SELECT setBit
+      CASE 15
+        IF shiftData.BIT0 = 0 THEN shiftData.BIT0 = 1 ELSE shiftData.BIT0 = 0
+      CASE 14
+        IF shiftData.BIT1 = 0 THEN shiftData.BIT1 = 1 ELSE shiftData.BIT1 = 0
+      CASE 13
+        IF shiftData.BIT2 = 0 THEN shiftData.BIT2 = 1 ELSE shiftData.BIT2 = 0
+      CASE 12
+        IF shiftData.BIT3 = 0 THEN shiftData.BIT3 = 1 ELSE shiftData.BIT3 = 0
+      CASE 11
+        IF shiftData.BIT4 = 0 THEN shiftData.BIT4 = 1 ELSE shiftData.BIT4 = 0
+      CASE 10
+        IF shiftData.BIT5 = 0 THEN shiftData.BIT5 = 1 ELSE shiftData.BIT5 = 0
+      CASE 9
+        IF shiftData.BIT6 = 0 THEN shiftData.BIT6 = 1 ELSE shiftData.BIT6 = 0
+      CASE 8
+        IF shiftData.BIT7 = 0 THEN shiftData.BIT7 = 1 ELSE shiftData.BIT7 = 0
+      CASE 7
+        IF shiftData.BIT8 = 0 THEN shiftData.BIT8 = 1 ELSE shiftData.BIT8 = 0
+      CASE 6
+        IF shiftData.BIT9 = 0 THEN shiftData.BIT9 = 1 ELSE shiftData.BIT9 = 0
+      CASE 5
+        IF shiftData.BIT10 = 0 THEN shiftData.BIT10 = 1 ELSE shiftData.BIT10 = 0
+      CASE 4
+        IF shiftData.BIT11 = 0 THEN shiftData.BIT11 = 1 ELSE shiftData.BIT11 = 0
+      CASE 3
+        IF shiftData.BIT12 = 0 THEN shiftData.BIT12 = 1 ELSE shiftData.BIT12 = 0
+      CASE 2
+        IF shiftData.BIT13 = 0 THEN shiftData.BIT13 = 1 ELSE shiftData.BIT13 = 0
+      CASE 1
+        IF shiftData.BIT14 = 0 THEN shiftData.BIT14 = 1 ELSE shiftData.BIT14 = 0
+      CASE 0
+        IF shiftData.BIT15 = 0 THEN shiftData.BIT15 = 1 ELSE shiftData.BIT15 = 0
+    ENDSELECT
+    GOSUB putShiftData
+    RETURN
+
+'sets a pin on the shift registers
+setShiftBit:
+    setBit = setBit - 1
+    SELECT setBit
+      CASE 15
+        shiftData.BIT0 = 1
+      CASE 14
+        shiftData.BIT1 = 1
+      CASE 13
+        shiftData.BIT2 = 1
+      CASE 12
+        shiftData.BIT3 = 1
+      CASE 11
+        shiftData.BIT4 = 1
+      CASE 10
+        shiftData.BIT5 = 1
+      CASE 9
+        shiftData.BIT6 = 1
+      CASE 8
+        shiftData.BIT7 = 1
+      CASE 7
+        shiftData.BIT8 = 1
+      CASE 6
+        shiftData.BIT9 = 1
+      CASE 5
+        shiftData.BIT10 = 1
+      CASE 4
+        shiftData.BIT11 = 1
+      CASE 3
+        shiftData.BIT12 = 1
+      CASE 2
+        shiftData.BIT13 = 1
+      CASE 1
+        shiftData.BIT14 = 1
+      CASE 0
+        shiftData.BIT15 = 1
+    ENDSELECT
+    GOSUB putShiftData
+    RETURN
+
+   'clears a pin on the shift register
+  clearShiftBit:
+    setBit = setBit - 1
+    SELECT setBit
+      CASE 15
+        shiftData.BIT0 = 0
+      CASE 14
+        shiftData.BIT1 = 0
+      CASE 13
+        shiftData.BIT2 = 0
+      CASE 12
+        shiftData.BIT3 = 0
+      CASE 11
+        shiftData.BIT4 = 0
+      CASE 10
+        shiftData.BIT5 = 0
+      CASE 9
+        shiftData.BIT6 = 0
+      CASE 8
+        shiftData.BIT7 = 0
+      CASE 7
+        shiftData.BIT8 = 0
+      CASE 6
+        shiftData.BIT9 = 0
+      CASE 5
+        shiftData.BIT10 = 0
+      CASE 4
+        shiftData.BIT11 = 0
+      CASE 3
+        shiftData.BIT12 = 0
+      CASE 2
+        shiftData.BIT13 = 0
+      CASE 1
+        shiftData.BIT14 = 0
+      CASE 0
+        shiftData.BIT15 = 0
+    ENDSELECT
+    GOSUB putShiftData
+    RETURN
+
+'moves the stored data for shift registers in shiftBlinds and shiftData
+'  out onto the physical ICs
+putShiftData:
+    LOW shiftLatchEnable 'close latch windows
+    SHIFTOUT shiftDataPin, shiftClock, LSBFIRST, [shiftBlinds\8]
+    SHIFTOUT shiftDataPin, shiftClock, LSBFIRST, [shiftData\16]
+    HIGH shiftLatchEnable 'open the windows now that data's ready
+    RETURN
+
+'this is called once every main loop to handle running blinds if we need to
+'runBlinds:
+'    IF curBlindsScheme > 0 THEN
+'      blindLoop = blindLoop - 1
+'      IF blindLoop = 0 THEN
+'        SELECT curBlindsScheme
+'          CASE 1 'ne
+'            shiftBlinds = %10000000 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 2 'se
+'            shiftBlinds = %01000000 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 3 'baye
+'            shiftBlinds = %00010000 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 4 'baymid
+'            shiftBlinds = %00001000 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 5 'bayw
+'            shiftBlinds = %00000100 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 6 'east
+'            shiftBlinds = %11000000 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 7 'bay
+'            shiftBlinds = %00011100 | blindDirection
+'            GOSUB pulseBlinds
+'          CASE 8 'all, rolling
+'            SELECT blindPulsesToGo
+'              CASE 19 TO 21
+'                shiftBlinds = %10000000 | blindDirection
+'              CASE 16 TO 18
+'                shiftBlinds = %11000000 | blindDirection
+'              CASE 13 TO 15
+'                shiftBlinds = %11010000 | blindDirection
+'              CASE 10 TO 12
+'                shiftBlinds = %01011000 | blindDirection
+'              CASE 7 TO 9
+'                shiftBlinds = %00011100 | blindDirection
+'              CASE 4 TO 6
+'                shiftBlinds = %00001100 | blindDirection
+'              CASE 1 TO 3
+'                shiftBlinds = %00000100 | blindDirection
+'            ENDSELECT
+'            GOSUB pulseBlinds
+'          CASE ELSE
+'            curBlindsScheme = 0
+'        ENDSELECT
+'
+'        blindPulsesToGo = blindPulsesToGo - 1
+'        blindLoop = blindLoopDelay
+'        'done?
+'        IF blindPulsesToGo = 0 THEN curBlindsScheme = 0
+'      ENDIF
+'    ENDIF
+'
+'    RETURN
+'
+'pulseBlinds:
+'    'setBit holds the blind to pulse
+'    GOSUB putShiftData
+'    PAUSE 500
+'    shiftBlinds = %00000000
+'    GOSUB putShiftData
+'
+'    RETURN
+
+  END

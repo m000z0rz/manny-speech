@@ -1,0 +1,18 @@
+<grammar version="1.0" xml:lang="en-US" root="testName"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="testName" scope="public">
+ 	<item> <ruleref uri="#name" />  </item>
+ 	<item> test rule </item>
+ </rule>
+
+  <rule id="name">
+ 	<one-of>
+ 		<item> Manny </item>
+ 		<item> Computer </item>
+	</one-of>
+ </rule>
+
+</grammar>

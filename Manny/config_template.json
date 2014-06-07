@@ -1,0 +1,14 @@
+﻿{
+	"hub": {
+		"address": "http://localHost:8201"
+	},
+	"nodeContext": {
+		"nodeName": "<human readable name for node>",
+		"room": "<name of room for routing commands>"
+	},
+	"services": [
+	],
+	"localSpeech": {
+		
+	}
+}

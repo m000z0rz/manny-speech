@@ -1,0 +1,13 @@
+<grammar version="1.0" xml:lang="en-US" root="fanAuto"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="fanAuto" scope="public">
+ 	<one-of>
+ 		<item> Turn the fan to auto. </item>
+ 		<item> Set the fan to auto. </item>
+	</one-of>
+ </rule>
+
+</grammar>

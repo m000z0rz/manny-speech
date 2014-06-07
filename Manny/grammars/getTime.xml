@@ -1,0 +1,12 @@
+<grammar version="1.0" xml:lang="en-US" root="getTime"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="getTime" scope="public">
+ 	<one-of>
+ 		<item> what time is it? </item>
+	</one-of>
+ </rule>
+
+</grammar>
