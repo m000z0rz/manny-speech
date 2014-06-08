@@ -63,6 +63,7 @@ namespace Manny
 
         public static DialoguerMode ModeInactive = new DialoguerMode("inactive");
         public static DialoguerMode ModeActive = new DialoguerMode("active");
+        public static DialoguerMode ModeStopListening = new DialoguerMode("stopListening");
 
         private SpeechRecognitionEngine sre;
         private SpeechSynthesizer tts;
@@ -292,7 +293,8 @@ namespace Manny
             {
                 foreach (Grammar g in grammars)
                 {
-                    if (g.RuleName == "name") g.Enabled = true;   
+                    if (g.RuleName == "name") g.Enabled = true;
+                    else if (g.RuleName == "resumeListening") g.Enabled = true;
                     else g.Enabled = false;
                 }
             }
@@ -301,6 +303,14 @@ namespace Manny
                 foreach (Grammar g in grammars)
                 {
                     g.Enabled = true;
+                }
+            }
+            else if (newMode == ModeStopListening)
+            {
+                foreach (Grammar g in grammars)
+                {
+                    if (g.RuleName == "resumeListening") g.Enabled = true;
+                    else g.Enabled = false;
                 }
             }
         }
@@ -313,23 +323,34 @@ namespace Manny
             System.Xml.XmlDocument xd;
             xd = (System.Xml.XmlDocument)e.Result.ConstructSmlFromSemantics();
             Debug.WriteLine("xml semantics: {0}", xd.InnerXml);
-            
-            
 
-            if (e.Result.Grammar.RuleName == "name")
+
+            string ruleName = e.Result.Grammar.RuleName;
+            if (ruleName == "name")
             {
+                if (e.Result.Text == "Manny") return; // require 'Hey Manny'
                 // good reference for ssml:http://www.cepstral.com/en/tutorials/view/ssml
                 PromptBuilder pb = new PromptBuilder();
                 pb.AppendSsmlMarkup("<prosody rate=\"1.2\">Yes?</prosody>");
                 tts.SpeakAsync(pb);
                 Mode = ModeActive;
             }
-            else if (e.Result.Grammar.RuleName == "inactivate")
+            else if (ruleName == "inactivate")
             {
                 Mode = ModeInactive;
                 //tts.SpeakAsync("Very good sir.");
             }
-            else if (e.Result.Grammar.RuleName == "getTime")
+            else if (ruleName == "stopListening")
+            {
+                Mode = ModeStopListening;
+                tts.SpeakAsync("no longer listening");
+            }
+            else if (ruleName == "resumeListening")
+            {
+                Mode = ModeActive;
+                tts.SpeakAsync("resumed listening");
+            }
+            else if (ruleName == "getTime")
             {
                 OnCommandRecognized(e);
                 PromptBuilder pb = new PromptBuilder();

@@ -371,6 +371,7 @@ namespace Manny
                 };
                 socket.Emit("handleCommand", projectorPower);
 
+                
                 var projectorSource = new
                 {
                     type = "benqprojector",
@@ -378,6 +379,7 @@ namespace Manny
                     source = "hdmi"
                 };
                 socket.Emit("handleCommand", projectorSource);
+                
             }
             else if (ruleName == "pullUpPC")
             {
@@ -397,6 +399,7 @@ namespace Manny
                 };
                 socket.Emit("handleCommand", onkyoVolume);
 
+
                 var projectorPower = new
                 {
                     type = "benqprojector",
@@ -405,6 +408,8 @@ namespace Manny
                 };
                 socket.Emit("handleCommand", projectorPower);
 
+
+                
                 var projectorSource = new
                 {
                     type = "benqprojector",
@@ -412,6 +417,7 @@ namespace Manny
                     source = "pc"
                 };
                 socket.Emit("handleCommand", projectorSource);
+                
             }
             else if (ruleName == "shutdownProjector")
             {

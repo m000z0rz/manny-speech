@@ -3,7 +3,8 @@
 
  <rule id="name">
  	<one-of>
- 		<item> Manny </item>
+ 		<item>Hey Manny</item>
+    <item>Manny</item>
 	</one-of>
  </rule>
 

@@ -1,0 +1,10 @@
+<grammar version="1.0" xml:lang="en-US" root="stopListening"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+ <rule id="stopListening">
+ 	<one-of>
+ 		<item>stop listening</item>
+	</one-of>
+ </rule>
+
+</grammar>
