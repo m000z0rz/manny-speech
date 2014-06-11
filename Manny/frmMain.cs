@@ -421,6 +421,13 @@ namespace Manny
             }
             else if (ruleName == "shutdownProjector")
             {
+            var onkyoPower = new
+                {
+                    type = "onkyo",
+                    functionName = "turnOff",
+                };
+                socket.Emit("handleCommand", onkyoPower);
+            
                 var projectorPower = new
                 {
                     type = "benqprojector",

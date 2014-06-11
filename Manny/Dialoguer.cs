@@ -144,7 +144,8 @@ namespace Manny
             }
 
             // dictation grammar to reduce false positives
-            DictationGrammar dg = new DictationGrammar("grammar:dictation#pronunciation");
+            //DictationGrammar dg = new DictationGrammar("grammar:dictation#pronunciation");
+            DictationGrammar dg = new DictationGrammar();
             dg.Name = "dictation";
             //grammars.Add(dg);
             sre.LoadGrammar(dg);
@@ -324,7 +325,7 @@ namespace Manny
         void sre_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
 
-            if (e.Result.Grammar.RuleName == "dictation")
+            if (e.Result.Grammar.Name == "dictation")
             {
                 Debug.WriteLine("ignoring dictation " + e.Result.Text);
                 return;
