@@ -140,6 +140,7 @@
     </Content>
     <Content Include="grammars\name.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="grammars\retractBrain.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -60,7 +60,7 @@ namespace Manny
             Debug.WriteLine("Connecting to hub @ " + config["hub"]["address"].InnerText);
             string hubAddress = config["hub"]["address"].InnerText;
             socket = new SocketIOClient.Client(hubAddress);
-            socket.Connect();
+            
            
             // Setup local speech recognition/tts
             
@@ -103,9 +103,6 @@ namespace Manny
                 }
             }
 
-
-
-            
             socket.On("connect", (Action<SocketIOClient.Messages.IMessage>)((data) =>
                 {
                     Debug.WriteLine("Connected to hub");
@@ -187,6 +184,8 @@ namespace Manny
                         throw new Exception("doesn't have service and need to figure out how to send callback");
                     }
                 }));
+
+            socket.Connect();
         }
 
         void localDialoguer_CommandRecognized(object sender, System.Speech.Recognition.SpeechRecognizedEventArgs e)
