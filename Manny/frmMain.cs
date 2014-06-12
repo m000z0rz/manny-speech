@@ -346,6 +346,27 @@ namespace Manny
             }
             else if (ruleName == "pullUpWiiU")
             {
+                var onkyoState = new
+                {
+                    type = "onkyo",
+                    functionName = "setState",
+                    power = "on",
+                    input = "game",
+                    volume = 35
+                };
+
+                socket.Emit("handleCommand", onkyoState);
+
+                var projectorState = new
+                {
+                    type = "benqprojector",
+                    functionName = "setState",
+                    power = "on",
+                    source = "hdmi"
+                };
+
+                socket.Emit("handleCommand", projectorState);
+                /*
                 var onkyoInput = new
                 {
                     type = "onkyo",
@@ -378,10 +399,33 @@ namespace Manny
                     source = "hdmi"
                 };
                 socket.Emit("handleCommand", projectorSource);
+                 * */
                 
             }
             else if (ruleName == "pullUpPC")
             {
+                var onkyoState = new
+                {
+                    type = "onkyo",
+                    functionName = "setState",
+                    power = "on",
+                    input = "pc",
+                    volume = 45
+                };
+
+                socket.Emit("handleCommand", onkyoState);
+
+                var projectorState = new
+                {
+                    type = "benqprojector",
+                    functionName = "setState",
+                    power = "on",
+                    source = "pc"
+                };
+
+                socket.Emit("handleCommand", projectorState);
+
+                /*
                 var onkyoInput = new
                 {
                     type = "onkyo",
@@ -416,6 +460,7 @@ namespace Manny
                     source = "pc"
                 };
                 socket.Emit("handleCommand", projectorSource);
+                 * */
                 
             }
             else if (ruleName == "shutdownProjector")
