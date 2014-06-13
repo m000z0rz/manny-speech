@@ -324,7 +324,8 @@ namespace Manny
                 var payload = new
                 {
                     type = "devices-insteon",
-                    functionName = "startAllLinking"
+                    functionName = "startAllLinking",
+                    room = config["nodeContext"]["room"].InnerText
                 };
 
                 socket.Emit("handleCommand", payload, "", (Action<dynamic>)((data) =>
@@ -366,41 +367,7 @@ namespace Manny
                 };
 
                 socket.Emit("handleCommand", projectorState);
-                /*
-                var onkyoInput = new
-                {
-                    type = "onkyo",
-                    functionName = "setInputSelector",
-                    input = "game"
-                };
-                socket.Emit("handleCommand", onkyoInput);
-
-                var onkyoVolume = new
-                {
-                    type = "onkyo",
-                    functionName = "setVolume",
-                    volume = "35"
-                };
-                socket.Emit("handleCommand", onkyoVolume);
-
-                var projectorPower = new
-                {
-                    type = "benqprojector",
-                    functionName = "setPower",
-                    power = "on"
-                };
-                socket.Emit("handleCommand", projectorPower);
-
-                
-                var projectorSource = new
-                {
-                    type = "benqprojector",
-                    functionName = "setSource",
-                    source = "hdmi"
-                };
-                socket.Emit("handleCommand", projectorSource);
-                 * */
-                
+               
             }
             else if (ruleName == "pullUpPC")
             {
@@ -424,44 +391,6 @@ namespace Manny
                 };
 
                 socket.Emit("handleCommand", projectorState);
-
-                /*
-                var onkyoInput = new
-                {
-                    type = "onkyo",
-                    functionName = "setInputSelector",
-                    input = "pc"
-                };
-                socket.Emit("handleCommand", onkyoInput);
-
-                var onkyoVolume = new
-                {
-                    type = "onkyo",
-                    functionName = "setVolume",
-                    volume = "45"
-                };
-                socket.Emit("handleCommand", onkyoVolume);
-
-
-                var projectorPower = new
-                {
-                    type = "benqprojector",
-                    functionName = "setPower",
-                    power = "on"
-                };
-                socket.Emit("handleCommand", projectorPower);
-
-
-                
-                var projectorSource = new
-                {
-                    type = "benqprojector",
-                    functionName = "setSource",
-                    source = "pc"
-                };
-                socket.Emit("handleCommand", projectorSource);
-                 * */
-                
             }
             else if (ruleName == "shutdownProjector")
             {
