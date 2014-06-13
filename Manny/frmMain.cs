@@ -101,6 +101,12 @@ namespace Manny
                     serviceMap.Add(serviceType, devicesStephanie);
 
                 }
+                else if(serviceType == "speech")
+                {
+                    serviceTypes.Add(serviceType);
+                    SpeechService newSpeechService = new SpeechService();
+                    serviceMap.Add(serviceType, newSpeechService);
+                }
             }
 
             socket.On("connect", (Action<SocketIOClient.Messages.IMessage>)((data) =>
@@ -108,27 +114,13 @@ namespace Manny
                     Debug.WriteLine("Connected to hub");
                     dynamic payload;
                     payload = new {
-                        context = JsonConvert.DeserializeObject(JsonConvert.SerializeXmlNode(config["nodeContext"], Newtonsoft.Json.Formatting.None)),
+                        nodeContext = JsonConvert.DeserializeObject(JsonConvert.SerializeXmlNode(config["nodeContext"], Newtonsoft.Json.Formatting.None)),
                         services = serviceTypes.ToArray()
                     };
 
                     socket.Emit("announceNode", payload );
 
-                    socket.Emit("getDeviceList", null, "", (Action<dynamic>)((deviceData) =>
-                        {
-                            List<Device> devices = new List<Device>();
-                            Debug.WriteLine("getDeviceList callback?");
-                            string json = JsonConvert.SerializeObject(deviceData.Args[0]);
-                            System.Xml.XmlDocument xml = JsonConvert.DeserializeXmlNode(deviceData.Args[0], "root");
-                            foreach (XmlNode device in xml["root"].GetElementsByTagName("devices"))
-                            {
-                                Debug.WriteLine("device: " + device.InnerXml);
-                                devices.Add(new Device(device));
-                            }
-
-                            localDialoguer.SetDevices(devices);
-                            //Debug.WriteLine(xml.ToString());
-                        }));
+                    refreshDeviceList();
                 }));
 
             socket.On("handleCommand", (Action<SocketIOClient.Messages.IMessage>)((data) =>
@@ -185,7 +177,54 @@ namespace Manny
                     }
                 }));
 
+            socket.On("serviceEvent", (Action<SocketIOClient.Messages.IMessage>)((data) =>
+                {
+                    Debug.WriteLine("serviceEvent!");
+                    string json = JsonConvert.SerializeObject(data.Json.Args[0]);
+                    Debug.WriteLine("service event json: " + json);
+
+                    XmlDocument xd = JsonConvert.DeserializeXmlNode(json, "root");
+                    XmlNode serviceEvent = xd["root"];
+                    XmlNode eventData = serviceEvent["data"];
+
+                    if (serviceEvent["serviceType"].InnerText == "devices-insteon" && serviceEvent["type"].InnerText == "allLinkCompleted")
+                    {
+                        Debug.WriteLine("is allLinkCompleted");
+                        if (eventData["room"].InnerText == config["nodeContext"]["room"].InnerText)
+                        {
+                            Debug.WriteLine("room matches");
+                            string deviceSubcategory = eventData["deviceSubcategory"].InnerText;
+                            string deviceName = eventData["deviceName"].InnerText;
+                            string insteonAddress = eventData["insteonAddress"].InnerText;
+                            int deviceId = int.Parse(eventData["deviceId"].InnerText);
+
+                            localDialoguer.SpeakAsync("I have detected a " + deviceSubcategory + " at address " + insteonAddress + ". It is temporarily known as " + deviceName + ".");
+                        }
+
+                        refreshDeviceList();
+                    }
+                }));
+
             socket.Connect();
+        }
+
+        private void refreshDeviceList()
+        {
+            socket.Emit("getDeviceList", null, "", (Action<dynamic>)((deviceData) =>
+            {
+                List<Device> devices = new List<Device>();
+                Debug.WriteLine("getDeviceList callback?");
+                string json = JsonConvert.SerializeObject(deviceData.Args[0]);
+                System.Xml.XmlDocument xml = JsonConvert.DeserializeXmlNode(deviceData.Args[0], "root");
+                foreach (XmlNode device in xml["root"].GetElementsByTagName("devices"))
+                {
+                    Debug.WriteLine("device: " + device.InnerXml);
+                    devices.Add(new Device(device));
+                }
+
+                localDialoguer.SetDevices(devices);
+                //Debug.WriteLine(xml.ToString());
+            }));
         }
 
         void localDialoguer_CommandRecognized(object sender, System.Speech.Recognition.SpeechRecognizedEventArgs e)
@@ -462,7 +501,6 @@ namespace Manny
             //socket.Emit("handleCommand", "{\"type\":\"nest\", \"functionName\":\"getStatus\"}", "", (data) =>
             socket.Emit("handleCommand", payload, "", (Action<dynamic>) ((data) =>
             {
-                Debug.WriteLine("callback?");
                 string json = JsonConvert.SerializeObject(data.Args[0]);
                 //Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                 System.Xml.XmlDocument xml = JsonConvert.DeserializeXmlNode(data.Args[0],"root");
@@ -504,6 +542,20 @@ namespace Manny
         private void frmMain_FormClosed(object sender, FormClosedEventArgs e)
         {
             socket.Close();
+        }
+
+        private void btFactoryResetInsteon_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to factory reset the insteon modem?", "insteon", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+            {
+                localDialoguer.SpeakAsync("Sending factory reset to the Insteon modem");
+                var payload = new
+                {
+                    type = "devices-insteon",
+                    functionName = "factoryReset"
+                };
+                socket.Emit("handleCommand", payload);
+            }
         }
     }
 }

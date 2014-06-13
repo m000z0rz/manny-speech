@@ -13,7 +13,7 @@ namespace Manny
         public int DeviceID { get; set; }
         public string Name { get; set; }
         public string Room { get; set; }
-        public bool CapabilitiesDimmable { get; set; }
+        public bool Dimmable { get; set; }
 
         public string ServiceType { get; set; }
         public int? StephaniePin { get; set; }
@@ -32,8 +32,8 @@ namespace Manny
             Name = node["name"].InnerText;
             Room = node["room"].InnerText;
 
-            int dimmable = int.Parse(node["capabilitiesDimmable"].InnerText);
-            if (dimmable == 0) CapabilitiesDimmable = false; else CapabilitiesDimmable = true;
+            int dimmable = int.Parse(node["dimmable"].InnerText);
+            if (dimmable == 0) Dimmable = false; else Dimmable = true;
 
             int pin;
             if (int.TryParse(node["stephaniePin"].InnerText, out pin)) StephaniePin = pin;
