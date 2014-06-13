@@ -101,6 +101,12 @@ namespace Manny
                     serviceMap.Add(serviceType, devicesStephanie);
 
                 }
+                else if(serviceType == "speech")
+                {
+                    serviceTypes.Add(serviceType);
+                    SpeechService newSpeechService = new SpeechService();
+                    serviceMap.Add(serviceType, newSpeechService);
+                }
             }
 
             socket.On("connect", (Action<SocketIOClient.Messages.IMessage>)((data) =>
@@ -108,7 +114,7 @@ namespace Manny
                     Debug.WriteLine("Connected to hub");
                     dynamic payload;
                     payload = new {
-                        context = JsonConvert.DeserializeObject(JsonConvert.SerializeXmlNode(config["nodeContext"], Newtonsoft.Json.Formatting.None)),
+                        nodeContext = JsonConvert.DeserializeObject(JsonConvert.SerializeXmlNode(config["nodeContext"], Newtonsoft.Json.Formatting.None)),
                         services = serviceTypes.ToArray()
                     };
 
@@ -171,6 +177,33 @@ namespace Manny
                     }
                 }));
 
+            socket.On("serviceEvent", (Action<SocketIOClient.Messages.IMessage>)((data) =>
+                {
+                    Debug.WriteLine("serviceEvent!");
+                    string json = JsonConvert.SerializeObject(data.Json.Args[0]);
+                    Debug.WriteLine("service event json: " + json);
+
+                    XmlDocument xd = JsonConvert.DeserializeXmlNode(json, "root");
+                    XmlNode serviceEvent = xd["root"];
+                    XmlNode eventData = serviceEvent["data"];
+
+                    if (serviceEvent["serviceType"].InnerText == "devices-insteon" && serviceEvent["type"].InnerText == "allLinkCompleted")
+                    {
+                        Debug.WriteLine("is allLinkCompleted");
+                        if (eventData["room"].InnerText == config["nodeContext"]["room"].InnerText)
+                        {
+                            Debug.WriteLine("room matches");
+                            string deviceSubcategory = eventData["deviceSubcategory"].InnerText;
+                            string deviceName = eventData["deviceName"].InnerText;
+                            string insteonAddress = eventData["insteonAddress"].InnerText;
+                            int deviceId = int.Parse(eventData["deviceId"].InnerText);
+
+                            localDialoguer.SpeakAsync("I have detected a " + deviceSubcategory + " at address " + insteonAddress + ". It is temporarily known as " + deviceName + ".");
+                        }
+
+                        refreshDeviceList();
+                    }
+                }));
             socket.Connect();
         }
 
@@ -329,7 +362,9 @@ namespace Manny
                 var payload = new
                 {
                     type = "devices-insteon",
-                    functionName = "startAllLinking"
+
+                    functionName = "startAllLinking",
+                    room = config["nodeContext"]["room"].InnerText
                 };
 
                 socket.Emit("handleCommand", payload, "", (Action<dynamic>)((data) =>
@@ -371,41 +406,6 @@ namespace Manny
                 };
 
                 socket.Emit("handleCommand", projectorState);
-                /*
-                var onkyoInput = new
-                {
-                    type = "onkyo",
-                    functionName = "setInputSelector",
-                    input = "game"
-                };
-                socket.Emit("handleCommand", onkyoInput);
-
-                var onkyoVolume = new
-                {
-                    type = "onkyo",
-                    functionName = "setVolume",
-                    volume = "35"
-                };
-                socket.Emit("handleCommand", onkyoVolume);
-
-                var projectorPower = new
-                {
-                    type = "benqprojector",
-                    functionName = "setPower",
-                    power = "on"
-                };
-                socket.Emit("handleCommand", projectorPower);
-
-                
-                var projectorSource = new
-                {
-                    type = "benqprojector",
-                    functionName = "setSource",
-                    source = "hdmi"
-                };
-                socket.Emit("handleCommand", projectorSource);
-                 * */
-                
             }
             else if (ruleName == "pullUpPC")
             {
@@ -430,43 +430,6 @@ namespace Manny
 
                 socket.Emit("handleCommand", projectorState);
 
-                /*
-                var onkyoInput = new
-                {
-                    type = "onkyo",
-                    functionName = "setInputSelector",
-                    input = "pc"
-                };
-                socket.Emit("handleCommand", onkyoInput);
-
-                var onkyoVolume = new
-                {
-                    type = "onkyo",
-                    functionName = "setVolume",
-                    volume = "45"
-                };
-                socket.Emit("handleCommand", onkyoVolume);
-
-
-                var projectorPower = new
-                {
-                    type = "benqprojector",
-                    functionName = "setPower",
-                    power = "on"
-                };
-                socket.Emit("handleCommand", projectorPower);
-
-
-                
-                var projectorSource = new
-                {
-                    type = "benqprojector",
-                    functionName = "setSource",
-                    source = "pc"
-                };
-                socket.Emit("handleCommand", projectorSource);
-                 * */
-                
             }
             else if (ruleName == "shutdownProjector")
             {
@@ -538,7 +501,6 @@ namespace Manny
             //socket.Emit("handleCommand", "{\"type\":\"nest\", \"functionName\":\"getStatus\"}", "", (data) =>
             socket.Emit("handleCommand", payload, "", (Action<dynamic>) ((data) =>
             {
-                Debug.WriteLine("callback?");
                 string json = JsonConvert.SerializeObject(data.Args[0]);
                 //Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                 System.Xml.XmlDocument xml = JsonConvert.DeserializeXmlNode(data.Args[0],"root");
@@ -580,6 +542,20 @@ namespace Manny
         private void frmMain_FormClosed(object sender, FormClosedEventArgs e)
         {
             socket.Close();
+        }
+
+        private void btFactoryResetInsteon_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to factory reset the insteon modem?", "insteon", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
+            {
+                localDialoguer.SpeakAsync("Sending factory reset to the Insteon modem");
+                var payload = new
+                {
+                    type = "devices-insteon",
+                    functionName = "factoryReset"
+                };
+                socket.Emit("handleCommand", payload);
+            }
         }
     }
 }

@@ -32,6 +32,10 @@
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.txtSirRate = new System.Windows.Forms.TextBox();
+<<<<<<< HEAD
+=======
+            this.btFactoryResetInsteon = new System.Windows.Forms.Button();
+>>>>>>> dfd20b90fa906e808841dc9f348895a011b34751
             this.SuspendLayout();
             // 
             // button1
@@ -72,11 +76,28 @@
             this.txtSirRate.TabIndex = 3;
             this.txtSirRate.Text = "+0.1";
             // 
+<<<<<<< HEAD
+=======
+            // btFactoryResetInsteon
+            // 
+            this.btFactoryResetInsteon.Location = new System.Drawing.Point(214, 115);
+            this.btFactoryResetInsteon.Name = "btFactoryResetInsteon";
+            this.btFactoryResetInsteon.Size = new System.Drawing.Size(65, 72);
+            this.btFactoryResetInsteon.TabIndex = 4;
+            this.btFactoryResetInsteon.Text = "factory reset insteon";
+            this.btFactoryResetInsteon.UseVisualStyleBackColor = true;
+            this.btFactoryResetInsteon.Click += new System.EventHandler(this.btFactoryResetInsteon_Click);
+            // 
+>>>>>>> dfd20b90fa906e808841dc9f348895a011b34751
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 262);
+<<<<<<< HEAD
+=======
+            this.Controls.Add(this.btFactoryResetInsteon);
+>>>>>>> dfd20b90fa906e808841dc9f348895a011b34751
             this.Controls.Add(this.txtSirRate);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
@@ -97,6 +118,7 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox txtSirRate;
+        private System.Windows.Forms.Button btFactoryResetInsteon;
     }
 }
 
