@@ -1,0 +1,30 @@
+<grammar version="1.0" xml:lang="en-US" root="cancelAllLinking"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+ <rule id="cancelAllLinking" scope="public">
+ 	<one-of>
+ 		<item>
+ 			<item>stop</item>
+		 	<one-of>
+		 		<item>looking</item>
+		 		<item>watching</item>
+		 		<item>searching</item>
+			</one-of>
+			<item>for</item>
+			<one-of>
+				<item>an</item>
+				<item></item>
+			</one-of>
+			<item>insteon</item>
+			<one-of>
+				<item>device</item>
+				<item>devices</item>
+			</one-of>
+		</item>
+		<item>stop all linking</item>
+		<item>cancel all linking</item>
+	</one-of>
+ </rule>
+
+</grammar>

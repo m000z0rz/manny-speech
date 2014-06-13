@@ -1,0 +1,13 @@
+<grammar version="1.0" xml:lang="en-US" root="resumeListening"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+ <rule id="resumeListening">
+   <item>manny</item>
+ 	<one-of>
+ 		<item>resume listening</item>
+    <item>start listening</item>
+    <item>continue listening</item>
+	</one-of>
+ </rule>
+
+</grammar>

@@ -1,0 +1,21 @@
+<grammar version="1.0" xml:lang="en-US" root="startAllLinking"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+ <rule id="startAllLinking" scope="public">
+ 	<one-of>
+ 		<item>
+		 	<one-of>
+		 		<item>look</item>
+		 		<item>watch</item>
+		 		<item>search</item>
+			</one-of>
+			<item>for an insteon device</item>
+		</item>
+		<item> start all linking </item>
+		<item> start all link </item>
+
+	</one-of>
+ </rule>
+
+</grammar>

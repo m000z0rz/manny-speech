@@ -1,0 +1,13 @@
+<grammar version="1.0" xml:lang="en-US" root="inactivate"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="inactivate" scope="public">
+ 	<one-of>
+ 		<item>that's all</item>
+ 		<item>that is all</item>
+	</one-of>
+ </rule>
+
+</grammar>

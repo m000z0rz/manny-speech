@@ -1,0 +1,12 @@
+<grammar version="1.0" xml:lang="en-US" root="fanOn"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="fanOn" scope="public">
+ 	<one-of>
+ 		<item> Turn the fan on. </item>
+	</one-of>
+ </rule>
+
+</grammar>

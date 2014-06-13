@@ -1,0 +1,21 @@
+<grammar version="1.0" xml:lang="en-US" root="pullUpPC"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="pullUpPC" scope="public">
+ 	<one-of>
+ 		<item>
+      <one-of>
+        <item>pull up</item>
+        <item>bring up</item>
+        <item>set up</item>
+      </one-of>
+      <one-of>
+        <item>the computer</item>
+      </one-of>
+    </item>
+	</one-of>
+ </rule>
+
+</grammar>
