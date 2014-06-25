@@ -53,6 +53,10 @@ namespace Manny
             {
                 EyesOff();
             }
+            else if (e.NewMode == Dialoguer.ModeStopListening)
+            {
+                EyesOff();
+            }
         }
 
         void dialoguer_VisemeReached(object sender, System.Speech.Synthesis.VisemeReachedEventArgs e)
@@ -77,7 +81,7 @@ namespace Manny
             bool written = false;
             if (serialPortBaseStream != null)
             {
-                Debug.WriteLine("Writing " + toSend);
+                //Debug.WriteLine("Writing " + toSend);
                 //serialStream.Write(toSend);
                 byte[] bytes = System.Text.Encoding.ASCII.GetBytes(toSend);
                 serialPortBaseStream.Write(bytes, 0, bytes.Length);

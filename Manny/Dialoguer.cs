@@ -82,6 +82,8 @@ namespace Manny
         public event EventHandler<SpeechRecognizedEventArgs> CommandRecognized;
         public event EventHandler<VisemeReachedEventArgs> VisemeReached;
         public event EventHandler<ModeChangedEventArgs> ModeChanged;
+        public event EventHandler<SpeakStartedEventArgs> SpeakStarted;
+        public event EventHandler<SpeakCompletedEventArgs> SpeakCompleted;
 
         private void OnCommandRecognized(SpeechRecognizedEventArgs e)
         {
@@ -96,6 +98,16 @@ namespace Manny
         private void OnModeChanged(ModeChangedEventArgs e)
         {
             if (ModeChanged != null) ModeChanged(this, e);
+        }
+
+        private void OnSpeakStarted(SpeakStartedEventArgs e)
+        {
+            if (SpeakStarted != null) SpeakStarted(this, e);
+        }
+
+        private void OnSpeakCompleted(SpeakCompletedEventArgs e)
+        {
+            if (SpeakCompleted != null) SpeakCompleted(this, e);
         }
 
         #endregion
@@ -406,11 +418,13 @@ namespace Manny
         void tts_SpeakStarted(object sender, SpeakStartedEventArgs e)
         {
             sre.RecognizeAsyncCancel();
+            OnSpeakStarted(e);
         }
 
         void tts_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
         {
             sre.RecognizeAsync(RecognizeMode.Multiple);
+            OnSpeakCompleted(e);
         }
 
         void tts_VisemeReached(object sender, VisemeReachedEventArgs e)

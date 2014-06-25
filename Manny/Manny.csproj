@@ -60,6 +60,7 @@
     <Compile Include="Device.cs" />
     <Compile Include="DevicesStephanieService.cs" />
     <Compile Include="Dialoguer.cs" />
+    <Compile Include="EasyTimer.cs" />
     <Compile Include="frmMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -67,6 +68,10 @@
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
     <Compile Include="IMannyService.cs" />
+    <Compile Include="Keepon.cs" />
+    <Compile Include="KeeponAvatar.cs" />
+    <Compile Include="KeeponEnums.cs" />
+    <Compile Include="KeeponMotorTarget.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpeechService.cs" />

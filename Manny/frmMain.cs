@@ -36,7 +36,7 @@ namespace Manny
 
         Dictionary<string, IMannyService> serviceMap = new Dictionary<string, IMannyService>();
         StephanieAvatar stephanie;
-
+        KeeponAvatar keepon;
 
         public frmMain()
         {
@@ -69,7 +69,7 @@ namespace Manny
 
             //StephanieAvatar stephanie;
             stephanie = new StephanieAvatar();
-
+            keepon = new KeeponAvatar();
             if (config["localSpeech"] != null && config["localSpeech"]["avatar"] != null)
             {
                 XmlElement avatarConfig = config["localSpeech"]["avatar"];
@@ -81,9 +81,17 @@ namespace Manny
                     stephanieSerial.Encoding = System.Text.Encoding.ASCII;
                     stephanieSerial.Open();
                     stephanie.Connect(stephanieSerial.BaseStream, localDialoguer);
-
+                }
+                else if (avatarType == "keepon")
+                {
+                    string serialPortName = avatarConfig["serialPort"].InnerText;
+                    SerialPort keeponSerial = new SerialPort(serialPortName, 115200, Parity.None, 8, StopBits.One);
+                    keeponSerial.Encoding = System.Text.Encoding.ASCII;
+                    keeponSerial.Open();
+                    keepon.Connect(keeponSerial.BaseStream, localDialoguer);
                 }
             }
+            
 
 
             // setup services
