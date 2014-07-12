@@ -1,0 +1,23 @@
+<grammar version="1.0" xml:lang="en-US" root="pullUpWii"
+ xmlns="http://www.w3.org/2001/06/grammar">
+
+
+
+ <rule id="pullUpWii" scope="public">
+ 	<one-of>
+ 		<item>
+      <one-of>
+        <item>pull up</item>
+        <item>bring up</item>
+        <item>set up</item>
+      </one-of>
+      <one-of>
+        <item>the we</item>
+        <item>the original we</item>
+        <item>the we original</item>
+      </one-of>
+    </item>
+	</one-of>
+ </rule>
+
+</grammar>

@@ -17,6 +17,7 @@ using System.Xml;
 
 using Newtonsoft.Json;
 
+
 //using WebSocket4Net;
 
 
@@ -415,6 +416,29 @@ namespace Manny
 
                 socket.Emit("handleCommand", projectorState);
             }
+            else if (ruleName == "pullUpWii")
+            {
+                var onkyoState = new
+                {
+                    type = "onkyo",
+                    functionName = "setState",
+                    power = "on",
+                    input = "dvr",
+                    volume = 35
+                };
+
+                socket.Emit("handleCommand", onkyoState);
+
+                var projectorState = new
+                {
+                    type = "benqprojector",
+                    functionName = "setState",
+                    power = "on",
+                    source = "hdmi"
+                };
+
+                socket.Emit("handleCommand", projectorState);
+            }
             else if (ruleName == "pullUpPC")
             {
                 var onkyoState = new
@@ -565,5 +589,6 @@ namespace Manny
                 socket.Emit("handleCommand", payload);
             }
         }
+
     }
 }
