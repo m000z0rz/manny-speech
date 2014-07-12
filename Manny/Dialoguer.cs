@@ -145,7 +145,7 @@ namespace Manny
 
             // Load grammars
             grammars = new List<Grammar>();
-
+            
             foreach (string grammarFile in Directory.GetFiles(Path.Combine(startupPath, "grammars"), "*.xml"))
             {
                 Debug.WriteLine("grammar file " + grammarFile);

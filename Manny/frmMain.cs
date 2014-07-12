@@ -39,13 +39,43 @@ namespace Manny
         StephanieAvatar stephanie;
         KeeponAvatar keepon;
 
+        Icon iconActive;
+        Icon iconInactive;
+        Icon iconStopListening;
+
+
         public frmMain()
         {
             InitializeComponent();
         }
 
+        private Icon loadIcon(string fileName)
+        {
+            /*
+            System.Drawing.Icon icnTask;
+            System.IO.Stream st;
+            System.Reflection.Assembly a = System.Reflection.Assembly.GetExecutingAssembly();
+            st = a.GetManifestResourceStream("{{NameSpace}}.Resources.TaskIcon.ico");
+            icnTask = new System.Drawing.Icon(st);
+
+            Properties.Resources.ResourceManager.GetStream("Mammoth.ico");
+             * */
+            System.IO.Stream st;
+            System.Reflection.Assembly a = System.Reflection.Assembly.GetExecutingAssembly();
+            st = a.GetManifestResourceStream("{{NameSpace}}.Resources.icons.Mammoth.ico");
+
+            //return new Icon(Properties.Resources.ResourceManager.GetStream("{{NameSpace}}.Resources.Mammoth.ico"));
+            return new Icon(Path.Combine(Application.StartupPath, "icons", fileName));
+            //return new Icon(st);
+        }
+
+
         private void frmMain_Load(object sender, EventArgs e)
         {
+            iconActive = loadIcon("Active.ico");
+            iconInactive = loadIcon("Inactive.ico");
+            iconStopListening = loadIcon("StopListening.ico");
+
             // Load config file
             string configFilename = Path.Combine(Application.StartupPath, "config.json");
             if (!File.Exists(configFilename))
@@ -67,6 +97,7 @@ namespace Manny
             
             localDialoguer = new Dialoguer(Application.StartupPath);
             localDialoguer.CommandRecognized += localDialoguer_CommandRecognized;
+            localDialoguer.ModeChanged += localDialoguer_ModeChanged;
 
             //StephanieAvatar stephanie;
             stephanie = new StephanieAvatar();
@@ -214,6 +245,22 @@ namespace Manny
                     }
                 }));
             socket.Connect();
+        }
+
+        void localDialoguer_ModeChanged(object sender, Dialoguer.ModeChangedEventArgs e)
+        {
+            if (e.NewMode == Dialoguer.ModeActive)
+            {
+                this.Icon = iconActive;
+            }
+            else if (e.NewMode == Dialoguer.ModeInactive)
+            {
+                this.Icon = iconInactive;
+            }
+            else if (e.NewMode == Dialoguer.ModeStopListening)
+            {
+                this.Icon = iconStopListening;
+            }
         }
 
         private void refreshDeviceList()
