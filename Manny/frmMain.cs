@@ -15,6 +15,7 @@ using System.IO.Ports;
 
 using System.Xml;
 
+using DailyCoding.EasyTimer;
 using Newtonsoft.Json;
 
 
@@ -43,6 +44,8 @@ namespace Manny
         Icon iconInactive;
         Icon iconStopListening;
 
+        IDisposable recognitionRecycleTimeout;
+
 
         public frmMain()
         {
@@ -51,22 +54,7 @@ namespace Manny
 
         private Icon loadIcon(string fileName)
         {
-            /*
-            System.Drawing.Icon icnTask;
-            System.IO.Stream st;
-            System.Reflection.Assembly a = System.Reflection.Assembly.GetExecutingAssembly();
-            st = a.GetManifestResourceStream("{{NameSpace}}.Resources.TaskIcon.ico");
-            icnTask = new System.Drawing.Icon(st);
-
-            Properties.Resources.ResourceManager.GetStream("Mammoth.ico");
-             * */
-            System.IO.Stream st;
-            System.Reflection.Assembly a = System.Reflection.Assembly.GetExecutingAssembly();
-            st = a.GetManifestResourceStream("{{NameSpace}}.Resources.icons.Mammoth.ico");
-
-            //return new Icon(Properties.Resources.ResourceManager.GetStream("{{NameSpace}}.Resources.Mammoth.ico"));
             return new Icon(Path.Combine(Application.StartupPath, "icons", fileName));
-            //return new Icon(st);
         }
 
 
@@ -98,6 +86,7 @@ namespace Manny
             localDialoguer = new Dialoguer(Application.StartupPath);
             localDialoguer.CommandRecognized += localDialoguer_CommandRecognized;
             localDialoguer.ModeChanged += localDialoguer_ModeChanged;
+            localDialoguer.AudioStateChanged += localDialoguer_AudioStateChanged;
 
             //StephanieAvatar stephanie;
             stephanie = new StephanieAvatar();
@@ -247,6 +236,22 @@ namespace Manny
             socket.Connect();
         }
 
+        void localDialoguer_AudioStateChanged(object sender, System.Speech.Recognition.AudioStateChangedEventArgs e)
+        {
+            if (e.AudioState == System.Speech.Recognition.AudioState.Silence)
+            {
+                lblAudioState.Text = "Silence";
+            }
+            else if (e.AudioState == System.Speech.Recognition.AudioState.Stopped)
+            {
+                lblAudioState.Text = "Stopped";
+            }
+            else if (e.AudioState == System.Speech.Recognition.AudioState.Speech)
+            {
+                lblAudioState.Text = "Speech";
+            }
+        }
+
         void localDialoguer_ModeChanged(object sender, Dialoguer.ModeChangedEventArgs e)
         {
             if (e.NewMode == Dialoguer.ModeActive)
@@ -282,11 +287,35 @@ namespace Manny
             }));
         }
 
+        void tryRecycleRecognitionEngineIn(int ms)
+        {
+            if (recognitionRecycleTimeout != null) recognitionRecycleTimeout.Dispose();
+
+            EasyTimer.SetTimeout(tryRecycleRecognitionEngine, ms);
+        }
+
+        void tryRecycleRecognitionEngine()
+        {
+            if (localDialoguer.RecognitionAudioState != System.Speech.Recognition.AudioState.Speech)
+            {
+                localDialoguer.RecycleRecognitionEngine();
+
+
+                if (recognitionRecycleTimeout != null) recognitionRecycleTimeout.Dispose();
+                EasyTimer.SetTimeout(tryRecycleRecognitionEngine, 60 * 2000); // try again in 2 minutes
+            }
+            else
+            {
+                EasyTimer.SetTimeout(tryRecycleRecognitionEngine, 500); // try again in 30 seconds
+            }
+        }
+
         void localDialoguer_CommandRecognized(object sender, System.Speech.Recognition.SpeechRecognizedEventArgs e)
         {
             System.Xml.XmlDocument xd;
             xd = (System.Xml.XmlDocument)e.Result.ConstructSmlFromSemantics();
 
+            Debug.WriteLine("Recognized " + e.Result.Grammar.RuleName + ": " + e.Result.Text);
             Debug.WriteLine(xd.InnerXml);
 
             string ruleName = e.Result.Grammar.RuleName;
@@ -634,6 +663,10 @@ namespace Manny
                     functionName = "factoryReset"
                 };
                 socket.Emit("handleCommand", payload);
+
+                var eo = new ExpandableObjectConverter();
+                var eo2 = new System.Dynamic.ExpandoObject();
+                
             }
         }
 

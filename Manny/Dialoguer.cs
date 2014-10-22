@@ -61,12 +61,21 @@ namespace Manny
             }
         }
 
+        public AudioState RecognitionAudioState
+        {
+            get
+            {
+                return sre.AudioState;
+            }
+        }
+
         public static DialoguerMode ModeInactive = new DialoguerMode("inactive");
         public static DialoguerMode ModeActive = new DialoguerMode("active");
         public static DialoguerMode ModeStopListening = new DialoguerMode("stopListening");
 
         private SpeechRecognitionEngine sre;
         private SpeechSynthesizer tts;
+        private string _grammarPath;
 
         List<Grammar> grammars;
 
@@ -84,6 +93,8 @@ namespace Manny
         public event EventHandler<ModeChangedEventArgs> ModeChanged;
         public event EventHandler<SpeakStartedEventArgs> SpeakStarted;
         public event EventHandler<SpeakCompletedEventArgs> SpeakCompleted;
+
+        public event EventHandler<AudioStateChangedEventArgs> AudioStateChanged;
 
         private void OnCommandRecognized(SpeechRecognizedEventArgs e)
         {
@@ -110,25 +121,26 @@ namespace Manny
             if (SpeakCompleted != null) SpeakCompleted(this, e);
         }
 
+        private void OnAudioStateChanged(AudioStateChangedEventArgs e)
+        {
+            if (AudioStateChanged != null) AudioStateChanged(this, e);
+        }
+
         #endregion
 
 
-        public Dialoguer(string startupPath) : this(startupPath, null, null, null, null) {
 
-        }
+
 
         public Dialoguer(
-            string startupPath,
-            Stream recognitionAudioStream,
-            SpeechAudioFormatInfo recognitionAudioFormat,
-            Stream ttsAudioStream,
-            SpeechAudioFormatInfo ttsAudioFormat
+            string startupPath
+            // Stream recognitionAudioStream,
+            // SpeechAudioFormatInfo recognitionAudioFormat,
+            // Stream ttsAudioStream,
+            // SpeechAudioFormatInfo ttsAudioFormat
             )
         {
-            // Build sre & tts, set inputs/outputs
-            sre = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
-            tts = new SpeechSynthesizer();
-
+            /*
             if(recognitionAudioStream == null) {
                 sre.SetInputToDefaultAudioDevice();
             } else {
@@ -140,15 +152,47 @@ namespace Manny
             } else {
                 tts.SetOutputToAudioStream(ttsAudioStream, ttsAudioFormat);
             }
+             */
 
-            
+            _grammarPath = Path.Combine(startupPath, "grammars");
+
+
+            tts = new SpeechSynthesizer();
+            tts.SetOutputToDefaultAudioDevice();
+
+            tts.VisemeReached += new EventHandler<VisemeReachedEventArgs>(tts_VisemeReached);
+            tts.SpeakStarted += new EventHandler<SpeakStartedEventArgs>(tts_SpeakStarted);
+            tts.SpeakCompleted += new EventHandler<SpeakCompletedEventArgs>(tts_SpeakCompleted);
+
+            Mode = ModeInactive;
+
+
+            setupSpeechRecognitionEngine();
+        }
+
+        void sre_AudioStateChanged(object sender, AudioStateChangedEventArgs e)
+        {
+            OnAudioStateChanged(e);
+        }
+
+        public void RecycleRecognitionEngine()
+        {
+            if (sre != null) sre.Dispose();
+            sre = null;
+
+            setupSpeechRecognitionEngine();
+        }
+
+        private void setupSpeechRecognitionEngine()
+        {
+            sre = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
 
             // Load grammars
             grammars = new List<Grammar>();
-            
-            foreach (string grammarFile in Directory.GetFiles(Path.Combine(startupPath, "grammars"), "*.xml"))
+
+            foreach (string grammarFile in Directory.GetFiles(_grammarPath, "*.xml"))
             {
-                Debug.WriteLine("grammar file " + grammarFile);
+                //Debug.WriteLine("grammar file " + grammarFile);
                 Grammar g = new Grammar(grammarFile);
                 grammars.Add(g);
 
@@ -156,25 +200,22 @@ namespace Manny
             }
 
             // dictation grammar to reduce false positives
-            //DictationGrammar dg = new DictationGrammar("grammar:dictation#pronunciation");
             DictationGrammar dg = new DictationGrammar();
             dg.Name = "dictation";
-            //grammars.Add(dg);
             sre.LoadGrammar(dg);
-
 
             // Wire events
             sre.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(sre_SpeechRecognized);
+            sre.AudioStateChanged += sre_AudioStateChanged;
 
-            tts.VisemeReached += new EventHandler<VisemeReachedEventArgs>(tts_VisemeReached);
-            tts.SpeakStarted += new EventHandler<SpeakStartedEventArgs>(tts_SpeakStarted);
-            tts.SpeakCompleted += new EventHandler<SpeakCompletedEventArgs>(tts_SpeakCompleted);
+            if (devices != null) recompileDeviceGrammars();
 
+            if (tts != null && tts.State != SynthesizerState.Speaking)
+            {
+                // Get started recognizing!
+                sre.RecognizeAsync(RecognizeMode.Multiple);
+            }
 
-            // Get started recognizing!
-            Mode = ModeInactive;
-
-            sre.RecognizeAsync(RecognizeMode.Multiple);
         }
 
         public void SetDevices(List<Device> _devices)
@@ -182,6 +223,8 @@ namespace Manny
             devices = _devices;
             recompileDeviceGrammars();
         }
+
+        
 
         void recompileDeviceGrammars()
         {           
@@ -334,6 +377,8 @@ namespace Manny
             }
         }
 
+
+
         void sre_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
 
@@ -343,12 +388,12 @@ namespace Manny
                 return;
             }
 
-            Debug.WriteLine("Recognized " + e.Result.Grammar.RuleName + ": " + e.Result.Text);
+            //Debug.WriteLine("Recognized " + e.Result.Grammar.RuleName + ": " + e.Result.Text);
 
             
             System.Xml.XmlDocument xd;
             xd = (System.Xml.XmlDocument)e.Result.ConstructSmlFromSemantics();
-            Debug.WriteLine("xml semantics: {0}", xd.InnerXml);
+            //Debug.WriteLine("xml semantics: {0}", xd.InnerXml);
 
 
             string ruleName = e.Result.Grammar.RuleName;
@@ -383,7 +428,7 @@ namespace Manny
                 string timeString = DateTime.Now.ToString("hh:mmtt");
                 pb.AppendText("It is currently");
                 pb.AppendTextWithHint(timeString, SayAs.Time12);
-                Debug.WriteLine("recognized getTime " + timeString);
+                //Debug.WriteLine("recognized getTime " + timeString);
 
                 tts.SpeakAsync(pb);
             }

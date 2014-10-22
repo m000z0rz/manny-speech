@@ -67,6 +67,7 @@
     <Compile Include="frmMain.Designer.cs">
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="Hub.cs" />
     <Compile Include="IMannyService.cs" />
     <Compile Include="Keepon.cs" />
     <Compile Include="KeeponAvatar.cs" />

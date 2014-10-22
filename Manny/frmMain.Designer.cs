@@ -34,6 +34,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.txtSirRate = new System.Windows.Forms.TextBox();
             this.btFactoryResetInsteon = new System.Windows.Forms.Button();
+            this.lblAudioState = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // button1
@@ -84,11 +85,21 @@
             this.btFactoryResetInsteon.UseVisualStyleBackColor = true;
             this.btFactoryResetInsteon.Click += new System.EventHandler(this.btFactoryResetInsteon_Click);
             // 
+            // lblAudioState
+            // 
+            this.lblAudioState.AutoSize = true;
+            this.lblAudioState.Location = new System.Drawing.Point(88, 270);
+            this.lblAudioState.Name = "lblAudioState";
+            this.lblAudioState.Size = new System.Drawing.Size(35, 13);
+            this.lblAudioState.TabIndex = 5;
+            this.lblAudioState.Text = "label1";
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 262);
+            this.ClientSize = new System.Drawing.Size(284, 296);
+            this.Controls.Add(this.lblAudioState);
             this.Controls.Add(this.btFactoryResetInsteon);
             this.Controls.Add(this.txtSirRate);
             this.Controls.Add(this.button3);
@@ -112,6 +123,7 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox txtSirRate;
         private System.Windows.Forms.Button btFactoryResetInsteon;
+        private System.Windows.Forms.Label lblAudioState;
     }
 }
 
